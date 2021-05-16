@@ -1,8 +1,8 @@
 const express = require("express");
 const app = express();
+
 const cors = require("cors");
 const graphqlHttp = require("express-graphql").graphqlHTTP;
-// const { buildSchema } = require("graphql");
 const mongoose = require("mongoose");
 
 const graphQlSchema = require("./graphql/schema/index");
@@ -19,8 +19,6 @@ app.use(
   "/graphql",
   graphqlHttp({
     schema: graphQlSchema,
-
-    // Graphl ql resolover
     rootValue: graphQlResolvers,
     graphiql: true,
   })
@@ -28,7 +26,7 @@ app.use(
 
 try {
   mongoose.connect(
-    "mongodb+srv://Benhur:user123@cluster0.l4pqn.mongodb.net/eventbookingapp?retryWrites=true&w=majority",
+    process.env.DB,
     { useUnifiedTopology: true, useNewUrlParser: true },
     () => {
       app.listen(process.env.PORT || 8080, function () {
