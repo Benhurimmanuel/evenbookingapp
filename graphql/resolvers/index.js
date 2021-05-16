@@ -1,5 +1,7 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const dotenv = require("dotenv");
+dotenv.config();
 
 const Event = require("../../models/event");
 const User = require("../../models/user");
@@ -59,7 +61,10 @@ module.exports = {
       throw error;
     }
   },
-  bookings: async () => {
+  bookings: async (args, req) => {
+    if (!req.isAuth) {
+      throw new Error("Unauthenticated!");
+    }
     try {
       const bookings = await Booking.find();
       return bookings.map((booking) => {
@@ -75,13 +80,16 @@ module.exports = {
       throw error;
     }
   },
-  createEvent: async (args) => {
+  createEvent: async (args, req) => {
+    if (!req.isAuth) {
+      throw new Error("Unauthenticated!");
+    }
     const event = new Event({
       title: args.eventInput.title,
       description: args.eventInput.description,
       price: +args.eventInput.price,
       date: new Date(args.eventInput.date).toISOString(),
-      creator: "609fc78827896c18086eff14",
+      creator: req.userId,
     });
     let createdEvent;
     try {
@@ -92,7 +100,7 @@ module.exports = {
         date: new Date(event._doc.date).toISOString(),
         creator: user.bind(this, result._doc.creator),
       };
-      const creator = await User.findById("609fc78827896c18086eff14");
+      const creator = await User.findById(req.userId);
 
       if (!creator) {
         throw new Error("user not found");
@@ -126,10 +134,13 @@ module.exports = {
       throw error;
     }
   },
-  bookEvent: async (args) => {
+  bookEvent: async (args, req) => {
+    if (!req.isAuth) {
+      throw new Error("Unauthenticated!");
+    }
     const fetchedEvent = await Event.findOne({ _id: args.eventId });
     const booking = new Booking({
-      user: "609fc78827896c18086eff14",
+      user: req.userId,
       event: fetchedEvent,
     });
     const result = await booking.save();
@@ -141,7 +152,10 @@ module.exports = {
       updatedAt: new Date(result._doc.updatedAt).toISOString(),
     };
   },
-  cancelBooking: async (args) => {
+  cancelBooking: async (args, req) => {
+    if (!req.isAuth) {
+      throw new Error("Unauthenticated!");
+    }
     try {
       const booking = await Booking.findById(args.bookingId).populate("event");
       console.log(booking);
@@ -155,20 +169,23 @@ module.exports = {
       throw error;
     }
   },
-  login: async (args) => {
-    try {
-      const userFound = await User.findOne({ email: args.email });
-      if (!userFound) {
-        throw new Error("User or password is incorrect");
-      } else {
-        const passwordMatch = await bcrypt.compare(
-          password,
-          userFound.password
-        );
-        if (!passwordMatch) {
-          throw new Error("User or password is incorrect");
-        }
+  login: async ({ email, password }) => {
+    const userFound = await User.findOne({ email: email });
+    if (!userFound) {
+      throw new Error("User or password is incorrect");
+    }
+    const passwordMatch = await bcrypt.compare(password, userFound.password);
+
+    if (!passwordMatch) {
+      throw new Error("User or password is incorrect");
+    }
+    const token = jwt.sign(
+      { userId: userFound.id, email: userFound.email },
+      process.env.token,
+      {
+        expiresIn: "1h",
       }
-    } catch (error) {}
+    );
+    return { userId: userFound.id, token: token, tokenExpTime: 1 };
   },
 };
