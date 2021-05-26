@@ -9,12 +9,13 @@ const mongoose = require("mongoose");
 const graphQlSchema = require("./graphql/schema/index");
 
 const graphQlResolvers = require("./graphql/resolvers/index");
+const isAuth = require("./graphql/authorization/index");
 
 const dotenv = require("dotenv");
 dotenv.config();
 
 app.use(express.json());
-
+app.use(isAuth);
 app.use(
   "/graphql",
   graphqlHttp({

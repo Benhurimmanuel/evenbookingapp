@@ -62,6 +62,7 @@ module.exports = {
     }
   },
   bookings: async (args, req) => {
+    console.log(req.isAuth)
     if (!req.isAuth) {
       throw new Error("Unauthenticated!");
     }
@@ -81,6 +82,7 @@ module.exports = {
     }
   },
   createEvent: async (args, req) => {
+    console.log(req.isAuth)
     if (!req.isAuth) {
       throw new Error("Unauthenticated!");
     }
@@ -135,6 +137,7 @@ module.exports = {
     }
   },
   bookEvent: async (args, req) => {
+    
     if (!req.isAuth) {
       throw new Error("Unauthenticated!");
     }
