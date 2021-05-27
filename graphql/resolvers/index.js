@@ -67,7 +67,7 @@ module.exports = {
       throw new Error("Unauthenticated!");
     }
     try {
-      const bookings = await Booking.find({user:req.userId});
+      const bookings = await Booking.find();
       return bookings.map((booking) => {
         return {
           ...booking._doc,
